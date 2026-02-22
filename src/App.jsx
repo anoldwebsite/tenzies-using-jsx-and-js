@@ -1,12 +1,13 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Die from "./Die";
 import { nanoid } from "nanoid";
 import Confetti from "./Confetti";
 
 export default function App() {
   const [dice, setDice] = useState(generateAllNewDice);
-  const [diceRolled, setDiceRolled] = useState(0);
+  const [diceRolled, setDiceRolled] = useState(0); // Show the number of rolls that it took the user to win the game.
+  const [time, setTime] = useState(0); // Timer to show how much time did the user take to win the game!
   const rollDiceButton = React.useRef(null);
   //console.log(rollDiceButton) // ›{current: null}
   
@@ -27,6 +28,26 @@ export default function App() {
             }
         }
     }, [gameWon]);
+
+  useEffect(() => {
+      /*
+          When gameWon becomes true
+    
+          Effect re-runs
+    
+          Cleanup clears interval
+    
+          Timer stops
+      */
+      if (gameWon) return; 
+      
+      const interval = setInterval(() => {
+          setTime(prev => prev + 1);
+      }, 1000); // 1000 millisecond means Increments time every second.
+    
+      return () => clearInterval(interval); // Cleans up on unmount
+    }, []); // [] means Runs once when component mounts.
+  
 
   function generateAllNewDice() {
     return Array.from({ length: 10 }, () => ({
@@ -59,9 +80,10 @@ export default function App() {
         like gameWon 
         function above but correct because reset is user-triggered.*/
         if (gameWon) {
-        setDice(generateAllNewDice());
-        setDiceRolled(0); // Resetting does not depend on the previous valud of diceRolled, so no prev => prev - prev etc.
-        return;
+          setDice(generateAllNewDice());
+          setDiceRolled(0); // Resetting does not depend on the previous valud of diceRolled, so no prev => prev - prev etc.
+          setTime(0); // Reset the timer for the new game.
+          return;
         }
 
         setDice((prevDice) =>
@@ -86,8 +108,12 @@ export default function App() {
                 {gameWon ? "New Game" : "Roll"}
       </button>
       <div className="times-rolled"> 
-          <p>Your rolled it {diceRolled} times!</p>
+          Your rolled it {diceRolled} times!
       </div>
+      <div className="timer">
+          Time: {time} seconds
+      </div>
+
     </main>
   );
 }
