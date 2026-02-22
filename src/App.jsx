@@ -746,6 +746,234 @@ That would:
 Render = description
 Effect = execution
 
+------------------------------
+
+Absolutely. Here’s a clean, architectural summary of adding a timer to your Tenzies app — no fluff, just structure and reasoning.
+
+---
+
+# 🧠 Goal
+
+Add a timer that:
+
+* Starts when the game begins
+* Stops when the game is won
+* Resets when a new game starts
+* Displays on the UI
+
+---
+
+# 🏗 Architecture Overview
+
+## 1️⃣ Timer Value → **State**
+
+```js
+const [time, setTime] = useState(0)
+```
+
+### Why state?
+
+* It must persist between renders
+* It must update the UI
+* It changes over time
+
+Rule applied:
+
+> If a value persists and affects UI → it must be state.
+
+---
+
+## 2️⃣ The Timer Mechanism → **Side Effect**
+
+Timers use:
+
+```js
+setInterval()
+```
+
+That is not part of rendering.
+
+It runs outside React.
+
+So we use:
+
+```js
+useEffect(...)
+```
+
+### Why useEffect?
+
+Because:
+
+* Timers are external processes
+* They must start/stop based on state
+* They require cleanup
+
+Rule applied:
+
+> Anything that runs over time or outside React belongs in useEffect.
+
+---
+
+## 3️⃣ Effect Logic Structure
+
+Conceptually:
+
+```
+If game is NOT won:
+    Start interval
+    Increment time every second
+
+If game becomes won:
+    Cleanup interval
+```
+
+Implementation pattern:
+
+```js
+useEffect(() => {
+    if (gameWon) return
+
+    const interval = setInterval(() => {
+        setTime(prev => prev + 1)
+    }, 1000)
+
+    return () => clearInterval(interval)
+}, [gameWon])
+```
+
+---
+
+# 🔁 Why `[gameWon]` Is the Dependency
+
+Because:
+
+* When `gameWon` changes
+* We either start or stop the timer
+
+React flow:
+
+```
+gameWon changes
+    ↓
+Effect re-runs
+    ↓
+Cleanup runs
+    ↓
+New effect logic executes
+```
+
+This keeps the timer perfectly synchronized.
+
+---
+
+# 4️⃣ Resetting Timer
+
+Inside your reset logic:
+
+```js
+if (gameWon) {
+    setDice(generateAllNewDice())
+    setDiceRolled(0)
+    setTime(0)
+    return
+}
+```
+
+### Why here?
+
+Because reset is **user-triggered** (button click).
+
+That’s event logic, not reactive logic.
+
+Rule applied:
+
+> User-triggered state changes belong in event handlers.
+
+---
+
+# 5️⃣ Displaying the Timer
+
+Simple render logic:
+
+```jsx
+<p>Time: {time} seconds</p>
+```
+
+Why no special handling?
+
+Because:
+
+```
+UI = f(state)
+```
+
+When `time` updates → React re-renders → UI updates automatically.
+
+---
+
+# 🧠 Architectural Separation
+
+| Concern       | Where it lives | Why                   |
+| ------------- | -------------- | --------------------- |
+| Timer value   | `useState`     | Persistent UI data    |
+| Timer ticking | `useEffect`    | External time process |
+| Game reset    | `rollDice()`   | User-triggered logic  |
+| Showing time  | JSX            | Pure rendering        |
+
+---
+
+# 🔥 Final Mental Model
+
+The timer wiring looks like this:
+
+```
+setInterval (side effect)
+        ↓
+setTime()
+        ↓
+React re-renders
+        ↓
+UI updates
+```
+
+And when game ends:
+
+```
+gameWon → true
+        ↓
+Effect cleanup runs
+        ↓
+Interval cleared
+        ↓
+Timer stops
+```
+
+---
+
+# 🏁 Why This Is Clean Architecture
+
+* Single source of truth
+* No duplicated state
+* No manual DOM updates
+* Clear separation between rendering and effects
+* Predictable lifecycle
+
+---
+
+You’ve now combined:
+
+* Derived state
+* Event-driven updates
+* Side effects
+* Cleanup logic
+* Declarative rendering
+
+That’s no longer beginner React.
+
+If you’d like, I can next show you a diagram of how this would break if dependencies were wrong — that’s where many developers get confused.
+
+
 ---
 
 */
