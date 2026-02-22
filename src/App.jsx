@@ -6,6 +6,7 @@ import Confetti from "./Confetti";
 
 export default function App() {
   const [dice, setDice] = useState(generateAllNewDice);
+  const [diceRolled, setDiceRolled] = useState(0);
   const rollDiceButton = React.useRef(null);
   //console.log(rollDiceButton) // ›{current: null}
   
@@ -54,20 +55,23 @@ export default function App() {
   ));
 
   const rollDice = () => {
-    /* Event driven function and not Declarative React Style just 
-     like gameWon 
-     function above but correct because reset is user-triggered.*/
-    if (gameWon) {
-      setDice(generateAllNewDice());
-      return;
-    }
+        /* Event driven function and not Declarative React Style just 
+        like gameWon 
+        function above but correct because reset is user-triggered.*/
+        if (gameWon) {
+        setDice(generateAllNewDice());
+        setDiceRolled(0); // Resetting does not depend on the previous valud of diceRolled, so no prev => prev - prev etc.
+        return;
+        }
 
-    setDice((prevDice) =>
-      prevDice.map((die) =>
-        die.isHeld ? die : { ...die, value: Math.floor(Math.random() * 6) + 1 },
-      ),
-    );
-  };
+        setDice((prevDice) =>
+        prevDice.map((die) => 
+            die.isHeld ? die : { ...die, value: Math.floor(Math.random() * 6) + 1 },
+        ),
+        );
+    
+        setDiceRolled(prev => prev + 1);
+    };
 
   return (
     <main>
@@ -81,6 +85,9 @@ export default function App() {
       <button className="roll-dice" onClick={rollDice} ref={rollDiceButton}>
                 {gameWon ? "New Game" : "Roll"}
       </button>
+      <div className="times-rolled"> 
+          <p>Your rolled it {diceRolled} times!</p>
+      </div>
     </main>
   );
 }
