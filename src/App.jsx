@@ -6,7 +6,9 @@ import Confetti from "./Confetti";
 
 export default function App() {
   const [dice, setDice] = useState(generateAllNewDice);
-
+  const rollDiceButton = React.useRef(null);
+  //console.log(rollDiceButton) // ›{current: null}
+  
   const gameWon = dice.every(
     (die) => die.isHeld && die.value === dice[0].value,
   );
@@ -14,12 +16,16 @@ export default function App() {
   /*
         Reactive logic: Happens because state changed.
         Correct — because it's reacting to state change.
-    */
-  useEffect(() => {
-    if (gameWon) {
-      console.log("You won the game! Tenzieeeeeees!");
-    }
-  }, [gameWon]);
+  */
+  
+  React.useEffect(() => {
+        if (gameWon) {
+            console.log("You won the game! Tenzieeeeeees!");
+            if(rollDiceButton.current !== null){
+                rollDiceButton.current.focus();
+            }
+        }
+    }, [gameWon]);
 
   function generateAllNewDice() {
     return Array.from({ length: 10 }, () => ({
@@ -72,8 +78,8 @@ export default function App() {
       </p>
       <div className="dice-container">{diceElements}</div>
       {gameWon && <Confetti />}
-      <button className="roll-dice" onClick={rollDice}>
-        {gameWon ? "New Game" : "Roll"}
+      <button className="roll-dice" onClick={rollDice} ref={rollDiceButton}>
+                {gameWon ? "New Game" : "Roll"}
       </button>
     </main>
   );
