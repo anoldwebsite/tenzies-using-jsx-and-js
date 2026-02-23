@@ -10,7 +10,7 @@ export default function App() {
   const [time, setTime] = useState(0); // Timer to show how much time did the user take to win the game!
   const rollDiceButton = React.useRef(null);
   //console.log(rollDiceButton) // ›{current: null}
-  
+
   const gameWon = dice.every(
     (die) => die.isHeld && die.value === dice[0].value,
   );
@@ -19,35 +19,28 @@ export default function App() {
         Reactive logic: Happens because state changed.
         Correct — because it's reacting to state change.
   */
-  
+
   React.useEffect(() => {
-        if (gameWon) {
-            console.log("You won the game! Tenzieeeeeees!");
-            if(rollDiceButton.current !== null){
-                rollDiceButton.current.focus();
-            }
-        }
-    }, [gameWon]);
+    if (gameWon) {
+      console.log("You won the game! Tenzieeeeeees!");
+      if (rollDiceButton.current !== null) {
+        rollDiceButton.current.focus();
+      }
+    }
+  }, [gameWon]);
 
   useEffect(() => {
-      /*
-          When gameWon becomes true
-    
-          Effect re-runs
-    
-          Cleanup clears interval
-    
-          Timer stops
-      */
-      if (gameWon) return; 
-      
-      const interval = setInterval(() => {
-          setTime(prev => prev + 1);
-      }, 1000); // 1000 millisecond means Increments time every second.
-    
-      return () => clearInterval(interval); // Cleans up on unmount
-    }, []); // [] means Runs once when component mounts.
-  
+    // Don't start timer if:
+    // 1. No rolls yet (game hasn't started)
+    // 2. Game is won
+    if (diceRolled === 0 || gameWon) return;
+
+    const interval = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 1000); // 1000 millisecond means Increments time every second.
+
+    return () => clearInterval(interval);
+  }, [diceRolled, gameWon]);
 
   function generateAllNewDice() {
     return Array.from({ length: 10 }, () => ({
@@ -76,24 +69,24 @@ export default function App() {
   ));
 
   const rollDice = () => {
-        /* Event driven function and not Declarative React Style just 
+    /* Event driven function and not Declarative React Style just 
         like gameWon 
         function above but correct because reset is user-triggered.*/
-        if (gameWon) {
-          setDice(generateAllNewDice());
-          setDiceRolled(0); // Resetting does not depend on the previous valud of diceRolled, so no prev => prev - prev etc.
-          setTime(0); // Reset the timer for the new game.
-          return;
-        }
+    if (gameWon) {
+      setDice(generateAllNewDice());
+      setDiceRolled(0); // Resetting does not depend on the previous valud of diceRolled, so no prev => prev - prev etc.
+      setTime(0); // Reset the timer for the new game.
+      return;
+    }
 
-        setDice((prevDice) =>
-        prevDice.map((die) => 
-            die.isHeld ? die : { ...die, value: Math.floor(Math.random() * 6) + 1 },
-        ),
-        );
-    
-        setDiceRolled(prev => prev + 1);
-    };
+    setDice((prevDice) =>
+      prevDice.map((die) =>
+        die.isHeld ? die : { ...die, value: Math.floor(Math.random() * 6) + 1 },
+      ),
+    );
+
+    setDiceRolled((prev) => prev + 1);
+  };
 
   return (
     <main>
@@ -105,15 +98,10 @@ export default function App() {
       <div className="dice-container">{diceElements}</div>
       {gameWon && <Confetti />}
       <button className="roll-dice" onClick={rollDice} ref={rollDiceButton}>
-                {gameWon ? "New Game" : "Roll"}
+        {gameWon ? "New Game" : "Roll"}
       </button>
-      <div className="times-rolled"> 
-          Your rolled it {diceRolled} times!
-      </div>
-      <div className="timer">
-          Time: {time} seconds
-      </div>
-
+      <div className="times-rolled">Your rolled it {diceRolled} times!</div>
+      <div className="timer">Time: {time} seconds</div>
     </main>
   );
 }
